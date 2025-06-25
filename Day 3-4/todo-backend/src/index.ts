@@ -1,5 +1,9 @@
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+dotenv.config(); // загружаем .env переменные
+
+import supabase from './supabase'; // наш клиент Supabase
 
 const app = express();
 const port = 4000;
@@ -7,45 +11,60 @@ const port = 4000;
 app.use(cors());
 app.use(express.json());
 
-type Todo = {
-  id: string;
-  title: string;
-  completed: boolean;
-};
+// 🔹 Получить все задачи
+app.get('/api/todos', async (_req, res) => {
+  const { data, error } = await supabase
+    .from('todos')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-let todos: Todo[] = [];
-
-app.get('/api/todos', (req, res) => {
-  res.json(todos);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
-app.post('/api/todos', (req, res) => {
-  const newTodo: Todo = {
-    id: Date.now().toString(),
-    title: req.body.title,
-    completed: false,
-  };
-  todos.push(newTodo);
-  res.status(201).json(newTodo);
+// 🔹 Добавить новую задачу
+app.post('/api/todos', async (req, res) => {
+  const { title } = req.body;
+
+  const { data, error } = await supabase
+    .from('todos')
+    .insert([{ title }])
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
 });
 
-app.delete('/api/todos/:id', (req, res) => {
+// 🔹 Удалить задачу по ID
+app.delete('/api/todos/:id', async (req, res) => {
   const { id } = req.params;
-  todos = todos.filter((t) => t.id !== id);
+
+  const { error } = await supabase
+    .from('todos')
+    .delete()
+    .eq('id', id);
+
+  if (error) return res.status(500).json({ error: error.message });
   res.status(204).end();
 });
 
-app.patch('/api/todos/:id', (req, res) => {
+// 🔹 Обновить задачу по ID
+app.patch('/api/todos/:id', async (req, res) => {
   const { id } = req.params;
-  const todo = todos.find((t) => t.id === id);
-  if (!todo) return res.status(404).json({ message: 'Not found' });
+  const { title, completed } = req.body;
 
-  todo.title = req.body.title ?? todo.title;
-  todo.completed = req.body.completed ?? todo.completed;
+  const { data, error } = await supabase
+    .from('todos')
+    .update({ title, completed })
+    .eq('id', id)
+    .select()
+    .single();
 
-  res.json(todo);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
 app.listen(port, () => {
-  console.log(`🚀 Server running at http://localhost:${port}`);
+  console.log(`✅ Server running at http://localhost:${port}`);
 });
