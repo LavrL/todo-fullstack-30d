@@ -8,8 +8,8 @@ services:
       - "4000:4000"
     env_file:
       - ./todo-backend/.env
-    volumes:
-      - ./todo-backend:/app
+    # volumes:
+    #   - ./todo-backend:/app
     restart: unless-stopped
 
   frontend:
@@ -19,8 +19,8 @@ services:
       - "3000:3000"
     env_file:
       - ./todo-next-app/.env.local
-    volumes:
-      - ./todo-next-app:/app
+    # volumes:
+    #   - ./todo-next-app:/app
     restart: unless-stopped
     depends_on:
       - backend
