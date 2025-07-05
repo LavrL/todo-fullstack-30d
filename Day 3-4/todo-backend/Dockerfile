@@ -1,13 +1,17 @@
 FROM node:20-alpine
 
+# Указываем development-режим
+ENV NODE_ENV=development
+
 WORKDIR /app
 
-# Копируем всё, чтобы поставить dev-зависимости
+# Копируем зависимости и ставим всё (включая devDependencies)
 COPY package*.json ./
 RUN npm install
 
+# Копируем остальной код
 COPY . .
 
 EXPOSE 4000
 
-CMD ["npm", "run", "dev"]
+CMD ["npx", "nodemon", "src/index.ts"]
